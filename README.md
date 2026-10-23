@@ -13,3 +13,7 @@ https://modrinth.com/mod/enchantment-compat
 ## License
 
 This mod is available under the MIT license. Please see the LICENSE file for more info.
+
+## Minecraft 26.2 port
+
+Port to Minecraft 26.2 (Fabric, Java 25, Mojang mappings) on the `26.2` branch. Settings are read from `config/enchantmentcompat.json`; RoundaLib and Mod Menu are no longer needed. Covered by 7 GameTests.

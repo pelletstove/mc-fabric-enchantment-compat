@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "enchantmentcompat_test",
+  "version": "1.0.0",
+  "name": "Enchantment Compat game tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-gametest": ["me.roundaround.enchantmentcompat.test.EnchantmentCompatTests"]
+  },
+  "depends": { "enchantmentcompat": "*" }
+}

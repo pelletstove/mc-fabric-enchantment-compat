@@ -2,11 +2,11 @@ package me.roundaround.enchantmentcompat.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
-import me.roundaround.enchantmentcompat.config.EnchantmentCompatConfig;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.tag.EnchantmentTags;
-import net.minecraft.registry.tag.TagKey;
+import me.roundaround.enchantmentcompat.EnchantmentCompatMod;
+import net.minecraft.core.Holder;
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.enchantment.Enchantment;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,59 +16,39 @@ import java.util.Optional;
 
 @Mixin(Enchantment.class)
 public abstract class EnchantmentMixin {
-  @ModifyExpressionValue(
-      method = "canBeCombined", at = @At(
-      value = "INVOKE",
-      target = "Lnet/minecraft/registry/entry/RegistryEntryList;contains" +
-               "(Lnet/minecraft/registry/entry/RegistryEntry;)Z",
-      ordinal = 0
-  )
-  )
-  private static boolean firstExclusiveSetContainsSecond(
-      boolean original, @Local(argsOnly = true, ordinal = 0) RegistryEntry<Enchantment> enchantment
-  ) {
-    return adjustExclusivity(enchantment).orElse(original);
-  }
+	@ModifyExpressionValue(method = "areCompatible", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/HolderSet;contains(Lnet/minecraft/core/Holder;)Z", ordinal = 0))
+	private static boolean enchantmentcompat$firstExclusiveSetContainsSecond(boolean original, @Local(argsOnly = true, ordinal = 0) Holder<Enchantment> enchantment) {
+		return enchantmentcompat$adjust(enchantment).orElse(original);
+	}
 
-  @ModifyExpressionValue(
-      method = "canBeCombined", at = @At(
-      value = "INVOKE",
-      target = "Lnet/minecraft/registry/entry/RegistryEntryList;contains" +
-               "(Lnet/minecraft/registry/entry/RegistryEntry;)Z",
-      ordinal = 1
-  )
-  )
-  private static boolean secondExclusiveSetContainsFirst(
-      boolean original, @Local(argsOnly = true, ordinal = 1) RegistryEntry<Enchantment> enchantment
-  ) {
-    return adjustExclusivity(enchantment).orElse(original);
-  }
+	@ModifyExpressionValue(method = "areCompatible", at = @At(value = "INVOKE", target = "Lnet/minecraft/core/HolderSet;contains(Lnet/minecraft/core/Holder;)Z", ordinal = 1))
+	private static boolean enchantmentcompat$secondExclusiveSetContainsFirst(boolean original, @Local(argsOnly = true, ordinal = 1) Holder<Enchantment> enchantment) {
+		return enchantmentcompat$adjust(enchantment).orElse(original);
+	}
 
-  @Unique
-  private static Optional<Boolean> adjustExclusivity(RegistryEntry<Enchantment> enchantment) {
-    EnchantmentCompatConfig config = EnchantmentCompatConfig.getInstance();
-    if (!config.modEnabled.getPendingValue()) {
-      return Optional.empty();
-    }
+	/** An empty result leaves vanilla's answer alone, false means "this exclusive set does not apply". */
+	@Unique
+	private static Optional<Boolean> enchantmentcompat$adjust(Holder<Enchantment> enchantment) {
+		if (!EnchantmentCompatMod.modEnabled) {
+			return Optional.empty();
+		}
+		if (EnchantmentCompatMod.bows && enchantmentcompat$isIn(enchantment, EnchantmentTags.BOW_EXCLUSIVE)) {
+			return Optional.of(false);
+		}
+		if (EnchantmentCompatMod.crossbows && enchantmentcompat$isIn(enchantment, EnchantmentTags.CROSSBOW_EXCLUSIVE)) {
+			return Optional.of(false);
+		}
+		if (EnchantmentCompatMod.armor && enchantmentcompat$isIn(enchantment, EnchantmentTags.ARMOR_EXCLUSIVE)) {
+			return Optional.of(false);
+		}
+		if (EnchantmentCompatMod.damage && enchantmentcompat$isIn(enchantment, EnchantmentTags.DAMAGE_EXCLUSIVE)) {
+			return Optional.of(false);
+		}
+		return Optional.empty();
+	}
 
-    if (config.bows.getPendingValue() && isIn(enchantment, EnchantmentTags.BOW_EXCLUSIVE_SET)) {
-      return Optional.of(false);
-    }
-    if (config.crossbows.getPendingValue() && isIn(enchantment, EnchantmentTags.CROSSBOW_EXCLUSIVE_SET)) {
-      return Optional.of(false);
-    }
-    if (config.armor.getPendingValue() && isIn(enchantment, EnchantmentTags.ARMOR_EXCLUSIVE_SET)) {
-      return Optional.of(false);
-    }
-    if (config.damage.getPendingValue() && isIn(enchantment, EnchantmentTags.DAMAGE_EXCLUSIVE_SET)) {
-      return Optional.of(false);
-    }
-
-    return Optional.empty();
-  }
-
-  @Unique
-  private static boolean isIn(RegistryEntry<Enchantment> enchantment, TagKey<Enchantment> tagKey) {
-    return Objects.equals(enchantment.value().exclusiveSet().getTagKey().orElse(null), tagKey);
-  }
+	@Unique
+	private static boolean enchantmentcompat$isIn(Holder<Enchantment> enchantment, TagKey<Enchantment> tagKey) {
+		return Objects.equals(enchantment.value().exclusiveSet().unwrapKey().orElse(null), tagKey);
+	}
 }

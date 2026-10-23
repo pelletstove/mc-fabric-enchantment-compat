@@ -1,0 +1,9 @@
+{
+	"required": true,
+	"package": "me.roundaround.enchantmentcompat.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": ["EnchantmentMixin"],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
